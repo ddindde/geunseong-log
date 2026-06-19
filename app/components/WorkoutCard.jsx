@@ -36,9 +36,7 @@ export default function WorkoutCard({ workout }) {
           >
             {workout.date}
           </span>
-          <span style={{ fontSize: "1.4rem" }}>
-            {workout.condition.split(" ")[0]}
-          </span>
+          <span style={{ fontSize: "1.4rem" }}>{workout.emoji}</span>
         </div>
         <h3
           style={{
@@ -48,12 +46,12 @@ export default function WorkoutCard({ workout }) {
             marginBottom: "8px",
           }}
         >
-          {workout.title}
+          {workout.name}
         </h3>
         <p
           style={{ fontSize: "0.8rem", color: "#A0A0A0", marginBottom: "20px" }}
         >
-          {workout.exercises.map((e) => e.name).join(" · ")}
+          {workout.condition}
         </p>
         <div
           style={{
@@ -71,17 +69,6 @@ export default function WorkoutCard({ workout }) {
               padding: "5px 12px",
               borderRadius: "6px",
               border: "1px solid rgba(57,255,20,0.2)",
-            }}
-          >
-            볼륨 {workout.volume.toLocaleString()}kg
-          </span>
-          <span
-            style={{
-              fontSize: "0.72rem",
-              background: "rgba(255,255,255,0.05)",
-              color: "#A0A0A0",
-              padding: "5px 12px",
-              borderRadius: "6px",
             }}
           >
             {workout.duration}분

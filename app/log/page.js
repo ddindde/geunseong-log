@@ -1,7 +1,15 @@
-import { workouts } from "../data/workouts";
+import { supabase } from "../lib/supabase";
 import WorkoutCard from "../components/WorkoutCard";
+import Link from "next/link";
 
-export default function LogPage() {
+export default async function LogPage() {
+  const { data: workouts, error } = await supabase
+    .from("workouts")
+    .select("*")
+    .order("date", { ascending: false });
+
+  if (error) return <p>데이터를 불러오지 못했습니다: {error.message}</p>;
+
   return (
     <section
       style={{
@@ -37,6 +45,21 @@ export default function LogPage() {
           <p style={{ color: "#A0A0A0", fontSize: "0.9rem" }}>
             카드를 클릭하면 상세 내용을 볼 수 있어요.
           </p>
+          <Link
+            href="/log/new"
+            style={{
+              display: "inline-block",
+              marginTop: "12px",
+              padding: "10px 20px",
+              background: "#39FF14",
+              color: "#000",
+              borderRadius: "8px",
+              fontWeight: 700,
+              textDecoration: "none",
+            }}
+          >
+            + 운동 추가
+          </Link>
         </div>
         <div
           style={{

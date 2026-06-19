@@ -1,12 +1,24 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { workouts } from "../../data/workouts";
+import { supabase } from "../../lib/supabase";
+import { deleteWorkout } from "./actions";
 
 export default async function WorkoutDetailPage({ params }) {
   const { id } = await params;
-  const workout = workouts.find((w) => w.id === Number(id));
 
-  if (!workout) notFound();
+  // workouts + sets 같이 가져오기
+  const { data: workout, error } = await supabase
+    .from("workouts")
+    .select("*, sets(*)")
+    .eq("id", id)
+    .single();
+
+  if (error || !workout) notFound();
+
+  // 총 볼륨 계산 (weight × set_count × reps 합산)
+  const totalVolume = workout.sets
+    ? workout.sets.reduce((acc, s) => acc + s.weight * s.set_count * s.reps, 0)
+    : 0;
 
   return (
     <div
@@ -17,7 +29,6 @@ export default async function WorkoutDetailPage({ params }) {
       }}
     >
       <div style={{ maxWidth: "680px", margin: "0 auto" }}>
-        {/* 뒤로가기 */}
         <Link
           href="/log"
           style={{
@@ -43,9 +54,7 @@ export default async function WorkoutDetailPage({ params }) {
               marginBottom: "8px",
             }}
           >
-            <span style={{ fontSize: "2rem" }}>
-              {workout.condition.split(" ")[0]}
-            </span>
+            <span style={{ fontSize: "2rem" }}>{workout.emoji}</span>
             <span
               style={{ fontSize: "0.8rem", color: "#39FF14", fontWeight: 600 }}
             >
@@ -60,11 +69,9 @@ export default async function WorkoutDetailPage({ params }) {
               marginBottom: "8px",
             }}
           >
-            {workout.title}
+            {workout.name}
           </h1>
-          <p style={{ color: "#A0A0A0" }}>
-            {workout.condition.split(" ").slice(1).join(" ")}
-          </p>
+          <p style={{ color: "#A0A0A0" }}>{workout.condition}</p>
         </div>
 
         {/* 운동 목록 */}
@@ -89,25 +96,26 @@ export default async function WorkoutDetailPage({ params }) {
           >
             운동 목록
           </p>
-          {workout.exercises.map((ex, i) => (
-            <div
-              key={i}
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                padding: "14px 0",
-                borderBottom: "1px solid rgba(255,255,255,0.06)",
-              }}
-            >
-              <span style={{ fontWeight: 600, color: "#ffffff" }}>
-                {ex.name}
-              </span>
-              <span style={{ color: "#A0A0A0", fontSize: "0.9rem" }}>
-                {ex.weight > 0 ? `${ex.weight}kg × ` : ""}
-                {ex.sets}세트 × {ex.reps}회
-              </span>
-            </div>
-          ))}
+          {workout.sets &&
+            workout.sets.map((s, i) => (
+              <div
+                key={i}
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  padding: "14px 0",
+                  borderBottom: "1px solid rgba(255,255,255,0.06)",
+                }}
+              >
+                <span style={{ fontWeight: 600, color: "#ffffff" }}>
+                  {s.exercise_name}
+                </span>
+                <span style={{ color: "#A0A0A0", fontSize: "0.9rem" }}>
+                  {s.weight > 0 ? `${s.weight}kg × ` : ""}
+                  {s.set_count}세트 × {s.reps}회
+                </span>
+              </div>
+            ))}
         </div>
 
         {/* 통계 */}
@@ -136,7 +144,7 @@ export default async function WorkoutDetailPage({ params }) {
             <p
               style={{ fontSize: "1.8rem", fontWeight: 900, color: "#ffffff" }}
             >
-              {workout.volume.toLocaleString()}
+              {totalVolume.toLocaleString()}
               <span style={{ fontSize: "1rem", color: "#A0A0A0" }}>kg</span>
             </p>
           </div>
@@ -195,6 +203,48 @@ export default async function WorkoutDetailPage({ params }) {
             <p style={{ color: "#A0A0A0", lineHeight: 1.7 }}>{workout.memo}</p>
           </div>
         )}
+        {/* 수정 / 삭제 버튼 */}
+        <div style={{ display: "flex", gap: "12px", marginTop: "20px" }}>
+          {/* 수정 버튼 — 수정 페이지로 이동 */}
+          <Link
+            href={`/log/${workout.id}/edit`}
+            style={{
+              flex: 1,
+              padding: "14px",
+              borderRadius: "8px",
+              background: "#1a1a1a",
+              color: "#fff",
+              fontWeight: 700,
+              fontSize: "1rem",
+              textAlign: "center",
+              textDecoration: "none",
+              border: "1px solid #333",
+            }}
+          >
+            ✏️ 수정하기
+          </Link>
+
+          {/* 삭제 버튼 — Server Action으로 바로 삭제 */}
+          <form action={deleteWorkout} style={{ flex: 1 }}>
+            <input type="hidden" name="id" value={workout.id} />
+            <button
+              type="submit"
+              style={{
+                width: "100%",
+                padding: "14px",
+                borderRadius: "8px",
+                background: "#FF3B30",
+                color: "#fff",
+                fontWeight: 700,
+                fontSize: "1rem",
+                cursor: "pointer",
+                border: "none",
+              }}
+            >
+              🗑️ 삭제하기
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );
