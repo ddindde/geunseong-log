@@ -17,9 +17,10 @@ export default async function WorkoutDetailPage({ params }) {
 
   // 총 볼륨 계산 (weight × set_count × reps 합산)
   const totalVolume = workout.sets
-    ? workout.sets.reduce((acc, s) => acc + s.weight * s.set_count * s.reps, 0)
+    ? workout.sets
+        .filter((s) => s.reps > 0) // 유산소/기타 제외
+        .reduce((acc, s) => acc + s.weight * s.set_count * s.reps, 0)
     : 0;
-
   return (
     <div
       style={{
@@ -111,8 +112,12 @@ export default async function WorkoutDetailPage({ params }) {
                   {s.exercise_name}
                 </span>
                 <span style={{ color: "#A0A0A0", fontSize: "0.9rem" }}>
-                  {s.weight > 0 ? `${s.weight}kg × ` : ""}
-                  {s.set_count}세트 × {s.reps}회
+                  {/* 웨이트만 중량/세트/횟수 표시 */}
+                  {s.weight > 0 && s.reps > 0
+                    ? `${s.weight}kg × ${s.set_count}세트 × ${s.reps}회`
+                    : s.weight > 0
+                      ? `${s.weight}분`
+                      : "기록됨"}
                 </span>
               </div>
             ))}
@@ -167,7 +172,7 @@ export default async function WorkoutDetailPage({ params }) {
                 marginBottom: "8px",
               }}
             >
-              운동 시간
+              총 운동 시간
             </p>
             <p
               style={{ fontSize: "1.8rem", fontWeight: 900, color: "#ffffff" }}
