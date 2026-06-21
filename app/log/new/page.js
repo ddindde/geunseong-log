@@ -217,7 +217,6 @@ export default function NewWorkoutPage() {
                 <input
                   name="exercise_name"
                   placeholder="종목명 (예: 스쿼트)"
-                  required
                   style={{ ...inputStyle, marginBottom: "8px" }}
                 />
                 <div
@@ -227,6 +226,7 @@ export default function NewWorkoutPage() {
                     gap: "8px",
                   }}
                 >
+                  <input name="exercise_note" type="hidden" value="" />
                   <input
                     name="weight"
                     type="number"

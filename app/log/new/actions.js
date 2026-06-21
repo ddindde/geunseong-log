@@ -26,19 +26,23 @@ export async function createWorkout(formData) {
   const exerciseNotes = formData.getAll("exercise_note");
   const exerciseTypes = formData.getAll("exercise_type");
 
-  if (exerciseNames.length > 0 && exerciseNames[0] !== "") {
-    const setsData = exerciseNames.map((name, i) => ({
-      workout_id: workout.id,
-      exercise_name: name,
-      weight: Number(weights[i]) || 0,
-      set_count: Number(setCounts[i]) || 1,
-      reps: Number(reps[i]) || 0,
-      exercise_note: exerciseNotes[i] || null,
-      exercise_type: exerciseTypes[i] || "weight",
-    }));
+  if (exerciseNames.length > 0) {
+    const setsData = exerciseNames
+      .map((name, i) => ({
+        workout_id: workout.id,
+        exercise_name: name,
+        weight: Number(weights[i]) || 0,
+        set_count: Number(setCounts[i]) || 1,
+        reps: Number(reps[i]) || 0,
+        exercise_note: exerciseNotes[i] || null,
+        exercise_type: exerciseTypes[i] || "weight",
+      }))
+      .filter((s) => s.exercise_name.trim() !== ""); // 빈 종목 제외
 
-    const { error: setsError } = await supabase.from("sets").insert(setsData);
-    if (setsError) throw new Error(setsError.message);
+    if (setsData.length > 0) {
+      const { error: setsError } = await supabase.from("sets").insert(setsData);
+      if (setsError) throw new Error(setsError.message);
+    }
   }
 
   revalidatePath("/log");

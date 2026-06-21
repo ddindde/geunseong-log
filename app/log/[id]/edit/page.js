@@ -80,17 +80,22 @@ export default function EditWorkoutPage() {
     const exerciseNotes = formData.getAll("exercise_note");
     const exerciseTypes = formData.getAll("exercise_type");
 
-    if (exerciseNames.length > 0 && exerciseNames[0] !== "") {
-      const setsData = exerciseNames.map((name, i) => ({
-        workout_id: id,
-        exercise_name: name,
-        weight: Number(weights[i]) || 0,
-        set_count: Number(setCounts[i]) || 1,
-        reps: Number(reps[i]) || 0,
-        exercise_note: exerciseNotes[i] || null,
-        exercise_type: exerciseTypes[i] || "weight",
-      }));
-      await supabase.from("sets").insert(setsData);
+    if (exerciseNames.length > 0) {
+      const setsData = exerciseNames
+        .map((name, i) => ({
+          workout_id: id,
+          exercise_name: name,
+          weight: weights[i] || 0, // 텍스트도 저장
+          set_count: Number(setCounts[i]) || 1,
+          reps: Number(reps[i]) || 0,
+          exercise_note: exerciseNotes[i] || null,
+          exercise_type: exerciseTypes[i] || "weight",
+        }))
+        .filter((s) => s.exercise_name.trim() !== ""); // 빈 종목 제외
+
+      if (setsData.length > 0) {
+        await supabase.from("sets").insert(setsData);
+      }
     }
 
     router.push("/log");
@@ -293,7 +298,6 @@ export default function EditWorkoutPage() {
                   name="exercise_name"
                   defaultValue={s.exercise_name}
                   placeholder="종목명 (예: 스쿼트)"
-                  required
                   style={{ ...inputStyle, marginBottom: "8px" }}
                 />
                 <div
@@ -306,21 +310,21 @@ export default function EditWorkoutPage() {
                   <input
                     name="weight"
                     type="number"
-                    defaultValue={s.weight}
+                    defaultValue={s.weight || ""}
                     placeholder="중량(kg)"
                     style={inputStyle}
                   />
                   <input
                     name="set_count"
                     type="number"
-                    defaultValue={s.set_count}
+                    defaultValue={s.set_count || ""}
                     placeholder="세트수"
                     style={inputStyle}
                   />
                   <input
                     name="reps"
                     type="number"
-                    defaultValue={s.reps}
+                    defaultValue={s.reps || ""}
                     placeholder="횟수"
                     style={inputStyle}
                   />
@@ -398,16 +402,16 @@ export default function EditWorkoutPage() {
                 />
                 <input
                   name="weight"
-                  type="number"
-                  defaultValue={s.weight}
-                  placeholder="시간 (분)"
+                  type="text"
+                  defaultValue={s.weight || ""}
+                  placeholder="시간 (예: 30분, 1시간)"
                   style={{ ...inputStyle, marginBottom: "8px" }}
                 />
                 <input name="set_count" type="hidden" defaultValue="1" />
                 <input name="reps" type="hidden" defaultValue="0" />
                 <input
                   name="exercise_note"
-                  defaultValue={s.exercise_note}
+                  defaultValue={s.exercise_note || ""}
                   placeholder="메모 (예: 공원 3바퀴, 5km)"
                   style={inputStyle}
                 />
@@ -486,7 +490,7 @@ export default function EditWorkoutPage() {
                 <input name="reps" type="hidden" defaultValue="0" />
                 <input
                   name="exercise_note"
-                  defaultValue={s.exercise_note}
+                  defaultValue={s.exercise_note || ""}
                   placeholder="메모 (예: 풋살 2시간)"
                   style={inputStyle}
                 />
