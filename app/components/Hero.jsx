@@ -37,8 +37,8 @@ export default async function Hero() {
             꾸준함이 결국 최고의 루틴이 됩니다.
           </p>
           <div className="hero-actions fade-up delay-3">
-            <a href="/log" className="btn-primary">
-              지금 시작하기
+            <a href="/log/new" className="btn-primary">
+              운동 기록 하기
             </a>
             <a href="/log" className="btn-secondary">
               운동 기록 보기

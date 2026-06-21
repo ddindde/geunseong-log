@@ -58,7 +58,7 @@ export default async function LogPage() {
               textDecoration: "none",
             }}
           >
-            + 운동 추가
+            + 운동 기록하기
           </Link>
         </div>
         <div

@@ -8,7 +8,7 @@ export default function Footer() {
             FitLog
           </div>
           <p>
-            Made by 수도 &nbsp;·&nbsp;
+            Made by 띤떼 &nbsp;·&nbsp;
             <a href="mailto:ttq921116@naver.com">ttq921116@naver.com</a>
           </p>
         </div>

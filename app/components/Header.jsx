@@ -12,7 +12,7 @@ export default function Header() {
           <Link href="/">홈</Link>
           <Link href="/log">운동기록</Link>
           <Link href="/about">소개</Link>
-          <Link href="/log" className="nav-cta">
+          <Link href="/log/new" className="nav-cta">
             시작하기
           </Link>
         </nav>

@@ -9,7 +9,7 @@ export default function CtaBand() {
           </h3>
           <p>꾸준함이 결국 성장이 됩니다.</p>
         </div>
-        <a href="/log" className="cta-btn">
+        <a href="/log/new" className="cta-btn">
           무료로 시작하기
         </a>
       </div>
