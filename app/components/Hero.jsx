@@ -1,4 +1,21 @@
-export default function Hero() {
+import { supabase } from "../lib/supabase";
+
+export default async function Hero() {
+  // 가장 최근 운동 + sets 가져오기
+  const { data: workout } = await supabase
+    .from("workouts")
+    .select("*, sets(*)")
+    .order("date", { ascending: false })
+    .limit(1)
+    .single();
+
+  // 총 볼륨 계산 (웨이트만)
+  const totalVolume = workout?.sets
+    ? workout.sets
+        .filter((s) => s.exercise_type === "weight" && s.reps > 0)
+        .reduce((acc, s) => acc + s.weight * s.set_count * s.reps, 0)
+    : 0;
+
   return (
     <section id="home" className="hero">
       <div className="hero-bg"></div>
@@ -28,41 +45,51 @@ export default function Hero() {
             </a>
           </div>
         </div>
+
         <div className="hero-visual fade-up delay-4">
           <div className="hero-card">
             <div className="hero-card-header">
-              <span className="hero-card-title">오늘의 루틴</span>
-              <span className="hero-card-badge">진행 중</span>
-            </div>
-            <div className="workout-row">
-              <span className="workout-row-name">스쿼트</span>
-              <span className="workout-row-val">
-                120kg × 5<span className="workout-row-pr">PR</span>
+              <span className="hero-card-title">최근 운동 루틴</span>
+              <span className="hero-card-title">
+                {workout ? `${workout.date} ` : "최근 루틴"}
               </span>
+              <span className="hero-card-badge">{workout?.emoji || "💪"}</span>
             </div>
-            <div className="workout-row">
-              <span className="workout-row-name">레그프레스</span>
-              <span className="workout-row-val">200kg × 10</span>
-            </div>
-            <div className="workout-row">
-              <span className="workout-row-name">루마니안 데드</span>
-              <span className="workout-row-val">90kg × 8</span>
-            </div>
-            <div className="workout-row">
-              <span className="workout-row-name">레그 컬</span>
-              <span className="workout-row-val">55kg × 12</span>
-            </div>
+
+            {workout && workout.sets && workout.sets.length > 0 ? (
+              workout.sets.slice(0, 4).map((s, i) => (
+                <div className="workout-row" key={i}>
+                  <span className="workout-row-name">{s.exercise_name}</span>
+                  <span className="workout-row-val">
+                    {s.exercise_type === "weight" && s.reps > 0
+                      ? `${s.weight}kg × ${s.reps}`
+                      : s.exercise_type === "cardio"
+                        ? `${s.weight}분`
+                        : s.exercise_note || "-"}
+                  </span>
+                </div>
+              ))
+            ) : (
+              <div className="workout-row">
+                <span className="workout-row-name" style={{ color: "#A0A0A0" }}>
+                  운동 기록을 추가해봐요!
+                </span>
+              </div>
+            )}
+
             <div className="hero-card-footer">
               <div>
                 <p className="stat-mini-label">총 볼륨</p>
                 <p className="stat-mini-val">
-                  4,820<span>kg</span>
+                  {totalVolume > 0 ? totalVolume.toLocaleString() : "-"}
+                  <span>kg</span>
                 </p>
               </div>
               <div>
                 <p className="stat-mini-label">운동 시간</p>
                 <p className="stat-mini-val">
-                  68<span>분</span>
+                  {workout?.duration || "-"}
+                  <span>분</span>
                 </p>
               </div>
             </div>

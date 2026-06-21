@@ -4,32 +4,36 @@ import { createWorkout } from "./actions";
 import Link from "next/link";
 
 export default function NewWorkoutPage() {
-  const [sets, setSets] = useState([
-    { exercise_name: "", weight: "", set_count: "", reps: "", type: "weight" },
+  // 웨이트 종목 목록 (여러 개 추가 가능)
+  const [weightSets, setWeightSets] = useState([
+    { exercise_name: "", weight: "", set_count: "", reps: "" },
   ]);
 
-  const addSet = () => {
-    setSets([
-      ...sets,
-      {
-        exercise_name: "",
-        weight: "",
-        set_count: "",
-        reps: "",
-        type: "weight",
-      },
+  // 유산소 목록
+  const [cardioSets, setCardioSets] = useState([]);
+
+  // 기타 목록
+  const [etcSets, setEtcSets] = useState([]);
+
+  const addWeight = () =>
+    setWeightSets([
+      ...weightSets,
+      { exercise_name: "", weight: "", set_count: "", reps: "" },
     ]);
-  };
+  const removeWeight = (i) =>
+    setWeightSets(weightSets.filter((_, idx) => idx !== i));
 
-  const removeSet = (index) => {
-    setSets(sets.filter((_, i) => i !== index));
-  };
+  const addCardio = () =>
+    setCardioSets([
+      ...cardioSets,
+      { exercise_name: "", duration: "", note: "" },
+    ]);
+  const removeCardio = (i) =>
+    setCardioSets(cardioSets.filter((_, idx) => idx !== i));
 
-  const changeType = (index, type) => {
-    const newSets = [...sets];
-    newSets[index] = { ...newSets[index], type };
-    setSets(newSets);
-  };
+  const addEtc = () =>
+    setEtcSets([...etcSets, { exercise_name: "", note: "" }]);
+  const removeEtc = (i) => setEtcSets(etcSets.filter((_, idx) => idx !== i));
 
   const inputStyle = {
     padding: "10px",
@@ -39,6 +43,14 @@ export default function NewWorkoutPage() {
     border: "1px solid #444",
     boxSizing: "border-box",
     width: "100%",
+  };
+
+  const sectionStyle = {
+    background: "#1a1a1a",
+    borderRadius: "8px",
+    padding: "16px",
+    marginBottom: "12px",
+    border: "1px solid #333",
   };
 
   return (
@@ -76,6 +88,7 @@ export default function NewWorkoutPage() {
           action={createWorkout}
           style={{ display: "flex", flexDirection: "column", gap: "16px" }}
         >
+          {/* workouts 기본 정보 */}
           <input
             name="name"
             required
@@ -92,7 +105,7 @@ export default function NewWorkoutPage() {
             type="number"
             name="duration"
             required
-            placeholder="운동 시간 (분)"
+            placeholder="총 운동 시간 (분)"
             style={{
               padding: "12px",
               borderRadius: "8px",
@@ -149,7 +162,7 @@ export default function NewWorkoutPage() {
             }}
           />
 
-          {/* 운동 목록 */}
+          {/* 🏋️ 웨이트 섹션 */}
           <div
             style={{
               borderTop: "1px solid #333",
@@ -167,36 +180,26 @@ export default function NewWorkoutPage() {
                 marginBottom: "16px",
               }}
             >
-              운동 목록
+              🏋️ 웨이트
             </p>
 
-            {sets.map((set, index) => (
-              <div
-                key={index}
-                style={{
-                  background: "#1a1a1a",
-                  borderRadius: "8px",
-                  padding: "16px",
-                  marginBottom: "12px",
-                  border: "1px solid #333",
-                }}
-              >
-                {/* 헤더 */}
+            {weightSets.map((s, i) => (
+              <div key={i} style={sectionStyle}>
                 <div
                   style={{
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center",
-                    marginBottom: "12px",
+                    marginBottom: "10px",
                   }}
                 >
                   <span style={{ color: "#A0A0A0", fontSize: "0.8rem" }}>
-                    종목 {index + 1}
+                    종목 {i + 1}
                   </span>
-                  {sets.length > 1 && (
+                  {weightSets.length > 1 && (
                     <button
                       type="button"
-                      onClick={() => removeSet(index)}
+                      onClick={() => removeWeight(i)}
                       style={{
                         background: "none",
                         border: "none",
@@ -209,134 +212,221 @@ export default function NewWorkoutPage() {
                     </button>
                   )}
                 </div>
-
-                {/* 타입 버튼 3개 */}
-                <div
-                  style={{ display: "flex", gap: "8px", marginBottom: "12px" }}
-                >
-                  {[
-                    { key: "weight", label: "🏋️ 웨이트" },
-                    { key: "cardio", label: "🏃 유산소" },
-                    { key: "etc", label: "⚽ 기타" },
-                  ].map(({ key, label }) => (
-                    <button
-                      key={key}
-                      type="button"
-                      onClick={() => changeType(index, key)}
-                      style={{
-                        flex: 1,
-                        padding: "7px",
-                        borderRadius: "6px",
-                        fontSize: "0.75rem",
-                        cursor: "pointer",
-                        border: "1px solid",
-                        borderColor: set.type === key ? "#39FF14" : "#444",
-                        background:
-                          set.type === key
-                            ? "rgba(57,255,20,0.1)"
-                            : "transparent",
-                        color: set.type === key ? "#39FF14" : "#A0A0A0",
-                      }}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-
-                {/* 종목명 */}
+                {/* hidden으로 type 전달 */}
+                <input name="exercise_type" type="hidden" value="weight" />
                 <input
                   name="exercise_name"
-                  placeholder="종목명 (예: 스쿼트, 러닝, 풋살)"
+                  placeholder="종목명 (예: 스쿼트)"
                   required
                   style={{ ...inputStyle, marginBottom: "8px" }}
                 />
-
-                {/* 웨이트: 중량 / 세트 / 횟수 */}
-                {set.type === "weight" && (
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "1fr 1fr 1fr",
-                      gap: "8px",
-                    }}
-                  >
-                    <input
-                      name="weight"
-                      type="number"
-                      placeholder="중량(kg)"
-                      style={inputStyle}
-                    />
-                    <input
-                      name="set_count"
-                      type="number"
-                      placeholder="세트수"
-                      style={inputStyle}
-                    />
-                    <input
-                      name="reps"
-                      type="number"
-                      placeholder="횟수"
-                      style={inputStyle}
-                    />
-                  </div>
-                )}
-
-                {/* 유산소: 시간 / 메모 */}
-                {set.type === "cardio" && (
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "8px",
-                    }}
-                  >
-                    <input
-                      name="weight"
-                      type="number"
-                      placeholder="시간 (분)"
-                      style={inputStyle}
-                    />
-                    <input name="reps" type="hidden" defaultValue="0" />
-                    <input name="set_count" type="hidden" defaultValue="1" />
-                    <input
-                      name="exercise_note"
-                      placeholder="메모 (예: 공원 3바퀴)"
-                      style={inputStyle}
-                    />
-                  </div>
-                )}
-
-                {/* 기타: 메모만 */}
-                {set.type === "etc" && (
-                  <div>
-                    <input name="weight" type="hidden" defaultValue="0" />
-                    <input name="reps" type="hidden" defaultValue="0" />
-                    <input name="set_count" type="hidden" defaultValue="1" />
-                    <input
-                      name="exercise_note"
-                      placeholder="메모 (예: 풋살 2시간, 등산 북한산)"
-                      style={inputStyle}
-                    />
-                  </div>
-                )}
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr 1fr",
+                    gap: "8px",
+                  }}
+                >
+                  <input
+                    name="weight"
+                    type="number"
+                    placeholder="중량(kg)"
+                    style={inputStyle}
+                  />
+                  <input
+                    name="set_count"
+                    type="number"
+                    placeholder="세트수"
+                    style={inputStyle}
+                  />
+                  <input
+                    name="reps"
+                    type="number"
+                    placeholder="횟수"
+                    style={inputStyle}
+                  />
+                </div>
               </div>
             ))}
 
             <button
               type="button"
-              onClick={addSet}
+              onClick={addWeight}
               style={{
                 width: "100%",
-                padding: "12px",
+                padding: "10px",
                 borderRadius: "8px",
                 background: "transparent",
                 color: "#39FF14",
                 border: "1px dashed #39FF14",
                 cursor: "pointer",
-                fontSize: "0.9rem",
+                fontSize: "0.85rem",
+                marginBottom: "24px",
               }}
             >
-              + 종목 추가
+              + 웨이트 종목 추가
+            </button>
+          </div>
+
+          {/* 🏃 유산소 섹션 */}
+          <div style={{ borderTop: "1px solid #333", paddingTop: "20px" }}>
+            <p
+              style={{
+                color: "#A0A0A0",
+                fontSize: "0.75rem",
+                fontWeight: 600,
+                letterSpacing: "0.1em",
+                textTransform: "uppercase",
+                marginBottom: "16px",
+              }}
+            >
+              🏃 유산소
+            </p>
+
+            {cardioSets.map((s, i) => (
+              <div key={i} style={sectionStyle}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: "10px",
+                  }}
+                >
+                  <span style={{ color: "#A0A0A0", fontSize: "0.8rem" }}>
+                    유산소 {i + 1}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => removeCardio(i)}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      color: "#FF3B30",
+                      cursor: "pointer",
+                      fontSize: "0.8rem",
+                    }}
+                  >
+                    삭제
+                  </button>
+                </div>
+                <input name="exercise_type" type="hidden" value="cardio" />
+                <input
+                  name="exercise_name"
+                  placeholder="종목명 (예: 러닝, 자전거)"
+                  required
+                  style={{ ...inputStyle, marginBottom: "8px" }}
+                />
+                <input
+                  name="weight"
+                  type="number"
+                  placeholder="시간 (분)"
+                  style={{ ...inputStyle, marginBottom: "8px" }}
+                />
+                <input name="set_count" type="hidden" defaultValue="1" />
+                <input name="reps" type="hidden" defaultValue="0" />
+                <input
+                  name="exercise_note"
+                  placeholder="메모 (예: 공원 3바퀴)"
+                  style={inputStyle}
+                />
+              </div>
+            ))}
+
+            <button
+              type="button"
+              onClick={addCardio}
+              style={{
+                width: "100%",
+                padding: "10px",
+                borderRadius: "8px",
+                background: "transparent",
+                color: "#A0A0A0",
+                border: "1px dashed #444",
+                cursor: "pointer",
+                fontSize: "0.85rem",
+                marginBottom: "24px",
+              }}
+            >
+              + 유산소 추가
+            </button>
+          </div>
+
+          {/* ⚽ 기타 섹션 */}
+          <div style={{ borderTop: "1px solid #333", paddingTop: "20px" }}>
+            <p
+              style={{
+                color: "#A0A0A0",
+                fontSize: "0.75rem",
+                fontWeight: 600,
+                letterSpacing: "0.1em",
+                textTransform: "uppercase",
+                marginBottom: "16px",
+              }}
+            >
+              ⚽ 기타
+            </p>
+
+            {etcSets.map((s, i) => (
+              <div key={i} style={sectionStyle}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: "10px",
+                  }}
+                >
+                  <span style={{ color: "#A0A0A0", fontSize: "0.8rem" }}>
+                    기타 {i + 1}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => removeEtc(i)}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      color: "#FF3B30",
+                      cursor: "pointer",
+                      fontSize: "0.8rem",
+                    }}
+                  >
+                    삭제
+                  </button>
+                </div>
+                <input name="exercise_type" type="hidden" value="etc" />
+                <input
+                  name="exercise_name"
+                  placeholder="종목명 (예: 풋살, 등산)"
+                  required
+                  style={{ ...inputStyle, marginBottom: "8px" }}
+                />
+                <input name="weight" type="hidden" defaultValue="0" />
+                <input name="set_count" type="hidden" defaultValue="1" />
+                <input name="reps" type="hidden" defaultValue="0" />
+                <input
+                  name="exercise_note"
+                  placeholder="메모 (예: 풋살 2시간, 북한산)"
+                  style={inputStyle}
+                />
+              </div>
+            ))}
+
+            <button
+              type="button"
+              onClick={addEtc}
+              style={{
+                width: "100%",
+                padding: "10px",
+                borderRadius: "8px",
+                background: "transparent",
+                color: "#A0A0A0",
+                border: "1px dashed #444",
+                cursor: "pointer",
+                fontSize: "0.85rem",
+              }}
+            >
+              + 기타 추가
             </button>
           </div>
 
@@ -351,7 +441,7 @@ export default function NewWorkoutPage() {
               fontSize: "1rem",
               cursor: "pointer",
               border: "none",
-              marginTop: "8px",
+              marginTop: "16px",
             }}
           >
             💾 저장하기

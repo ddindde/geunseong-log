@@ -4,7 +4,6 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 export async function createWorkout(formData) {
-  // 1. workouts 먼저 INSERT
   const { data: workout, error } = await supabase
     .from("workouts")
     .insert({
@@ -15,18 +14,18 @@ export async function createWorkout(formData) {
       memo: formData.get("memo"),
       emoji: formData.get("emoji"),
     })
-    .select() // 삽입된 행 반환 (id 필요)
+    .select()
     .single();
 
   if (error) throw new Error(error.message);
 
-  // 2. sets INSERT (운동 종목별로 여러 개)
   const exerciseNames = formData.getAll("exercise_name");
   const weights = formData.getAll("weight");
   const setCounts = formData.getAll("set_count");
   const reps = formData.getAll("reps");
+  const exerciseNotes = formData.getAll("exercise_note");
+  const exerciseTypes = formData.getAll("exercise_type");
 
-  // 입력된 세트가 있을 때만 INSERT
   if (exerciseNames.length > 0 && exerciseNames[0] !== "") {
     const setsData = exerciseNames.map((name, i) => ({
       workout_id: workout.id,
@@ -34,10 +33,11 @@ export async function createWorkout(formData) {
       weight: Number(weights[i]) || 0,
       set_count: Number(setCounts[i]) || 1,
       reps: Number(reps[i]) || 0,
+      exercise_note: exerciseNotes[i] || null,
+      exercise_type: exerciseTypes[i] || "weight",
     }));
 
     const { error: setsError } = await supabase.from("sets").insert(setsData);
-
     if (setsError) throw new Error(setsError.message);
   }
 

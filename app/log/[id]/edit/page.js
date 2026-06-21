@@ -8,7 +8,11 @@ export default function EditWorkoutPage() {
   const { id } = useParams();
   const router = useRouter();
   const [workout, setWorkout] = useState(null);
-  const [sets, setSets] = useState([]);
+  const [weightSets, setWeightSets] = useState([
+    { exercise_name: "", weight: "", set_count: "", reps: "" },
+  ]);
+  const [cardioSets, setCardioSets] = useState([]);
+  const [etcSets, setEtcSets] = useState([]);
 
   useEffect(() => {
     supabase
@@ -19,58 +23,42 @@ export default function EditWorkoutPage() {
       .then(({ data }) => {
         if (data) {
           setWorkout(data);
-          setSets(
-            data.sets.length > 0
-              ? data.sets.map((s) => ({
-                  id: s.id,
-                  exercise_name: s.exercise_name,
-                  weight: s.weight,
-                  set_count: s.set_count,
-                  reps: s.reps,
-                  type:
-                    s.reps === 0
-                      ? "etc"
-                      : s.weight > 0 && s.set_count === 1
-                        ? "cardio"
-                        : "weight",
-                }))
-              : [
-                  {
-                    exercise_name: "",
-                    weight: "",
-                    set_count: "",
-                    reps: "",
-                    type: "weight",
-                  },
-                ],
+          const w = data.sets.filter((s) => s.exercise_type === "weight");
+          const c = data.sets.filter((s) => s.exercise_type === "cardio");
+          const e = data.sets.filter((s) => s.exercise_type === "etc");
+          setWeightSets(
+            w.length > 0
+              ? w
+              : [{ exercise_name: "", weight: "", set_count: "", reps: "" }],
           );
+          setCardioSets(c);
+          setEtcSets(e);
         }
       });
   }, [id]);
 
-  const addSet = () =>
-    setSets([
-      ...sets,
-      {
-        exercise_name: "",
-        weight: "",
-        set_count: "",
-        reps: "",
-        type: "weight",
-      },
+  const addWeight = () =>
+    setWeightSets([
+      ...weightSets,
+      { exercise_name: "", weight: "", set_count: "", reps: "" },
     ]);
-  const removeSet = (index) => setSets(sets.filter((_, i) => i !== index));
-  const changeType = (index, type) => {
-    const newSets = [...sets];
-    newSets[index] = { ...newSets[index], type };
-    setSets(newSets);
-  };
+  const removeWeight = (i) =>
+    setWeightSets(weightSets.filter((_, idx) => idx !== i));
+  const addCardio = () =>
+    setCardioSets([
+      ...cardioSets,
+      { exercise_name: "", weight: "", exercise_note: "" },
+    ]);
+  const removeCardio = (i) =>
+    setCardioSets(cardioSets.filter((_, idx) => idx !== i));
+  const addEtc = () =>
+    setEtcSets([...etcSets, { exercise_name: "", exercise_note: "" }]);
+  const removeEtc = (i) => setEtcSets(etcSets.filter((_, idx) => idx !== i));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
 
-    // workouts 수정
     await supabase
       .from("workouts")
       .update({
@@ -83,13 +71,14 @@ export default function EditWorkoutPage() {
       })
       .eq("id", id);
 
-    // 기존 sets 삭제 후 새로 INSERT
     await supabase.from("sets").delete().eq("workout_id", id);
 
     const exerciseNames = formData.getAll("exercise_name");
     const weights = formData.getAll("weight");
     const setCounts = formData.getAll("set_count");
     const reps = formData.getAll("reps");
+    const exerciseNotes = formData.getAll("exercise_note");
+    const exerciseTypes = formData.getAll("exercise_type");
 
     if (exerciseNames.length > 0 && exerciseNames[0] !== "") {
       const setsData = exerciseNames.map((name, i) => ({
@@ -98,6 +87,8 @@ export default function EditWorkoutPage() {
         weight: Number(weights[i]) || 0,
         set_count: Number(setCounts[i]) || 1,
         reps: Number(reps[i]) || 0,
+        exercise_note: exerciseNotes[i] || null,
+        exercise_type: exerciseTypes[i] || "weight",
       }));
       await supabase.from("sets").insert(setsData);
     }
@@ -113,6 +104,14 @@ export default function EditWorkoutPage() {
     border: "1px solid #444",
     boxSizing: "border-box",
     width: "100%",
+  };
+
+  const sectionStyle = {
+    background: "#111",
+    borderRadius: "8px",
+    padding: "16px",
+    marginBottom: "12px",
+    border: "1px solid #333",
   };
 
   if (!workout)
@@ -240,7 +239,7 @@ export default function EditWorkoutPage() {
             }}
           />
 
-          {/* 운동 목록 */}
+          {/* 🏋️ 웨이트 */}
           <div
             style={{
               borderTop: "1px solid #333",
@@ -258,35 +257,25 @@ export default function EditWorkoutPage() {
                 marginBottom: "16px",
               }}
             >
-              운동 목록
+              🏋️ 웨이트
             </p>
-
-            {sets.map((set, index) => (
-              <div
-                key={index}
-                style={{
-                  background: "#1a1a1a",
-                  borderRadius: "8px",
-                  padding: "16px",
-                  marginBottom: "12px",
-                  border: "1px solid #333",
-                }}
-              >
+            {weightSets.map((s, i) => (
+              <div key={i} style={sectionStyle}>
                 <div
                   style={{
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center",
-                    marginBottom: "12px",
+                    marginBottom: "10px",
                   }}
                 >
                   <span style={{ color: "#A0A0A0", fontSize: "0.8rem" }}>
-                    종목 {index + 1}
+                    종목 {i + 1}
                   </span>
-                  {sets.length > 1 && (
+                  {weightSets.length > 1 && (
                     <button
                       type="button"
-                      onClick={() => removeSet(index)}
+                      onClick={() => removeWeight(i)}
                       style={{
                         background: "none",
                         border: "none",
@@ -299,134 +288,225 @@ export default function EditWorkoutPage() {
                     </button>
                   )}
                 </div>
-
-                <div
-                  style={{ display: "flex", gap: "8px", marginBottom: "12px" }}
-                >
-                  {[
-                    { key: "weight", label: "🏋️ 웨이트" },
-                    { key: "cardio", label: "🏃 유산소" },
-                    { key: "etc", label: "⚽ 기타" },
-                  ].map(({ key, label }) => (
-                    <button
-                      key={key}
-                      type="button"
-                      onClick={() => changeType(index, key)}
-                      style={{
-                        flex: 1,
-                        padding: "7px",
-                        borderRadius: "6px",
-                        fontSize: "0.75rem",
-                        cursor: "pointer",
-                        border: "1px solid",
-                        borderColor: set.type === key ? "#39FF14" : "#444",
-                        background:
-                          set.type === key
-                            ? "rgba(57,255,20,0.1)"
-                            : "transparent",
-                        color: set.type === key ? "#39FF14" : "#A0A0A0",
-                      }}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-
+                <input name="exercise_type" type="hidden" value="weight" />
                 <input
                   name="exercise_name"
-                  defaultValue={set.exercise_name}
-                  placeholder="종목명"
+                  defaultValue={s.exercise_name}
+                  placeholder="종목명 (예: 스쿼트)"
                   required
                   style={{ ...inputStyle, marginBottom: "8px" }}
                 />
-
-                {set.type === "weight" && (
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "1fr 1fr 1fr",
-                      gap: "8px",
-                    }}
-                  >
-                    <input
-                      name="weight"
-                      type="number"
-                      defaultValue={set.weight}
-                      placeholder="중량(kg)"
-                      style={inputStyle}
-                    />
-                    <input
-                      name="set_count"
-                      type="number"
-                      defaultValue={set.set_count}
-                      placeholder="세트수"
-                      style={inputStyle}
-                    />
-                    <input
-                      name="reps"
-                      type="number"
-                      defaultValue={set.reps}
-                      placeholder="횟수"
-                      style={inputStyle}
-                    />
-                  </div>
-                )}
-
-                {set.type === "cardio" && (
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "8px",
-                    }}
-                  >
-                    <input
-                      name="weight"
-                      type="number"
-                      defaultValue={set.weight}
-                      placeholder="시간 (분)"
-                      style={inputStyle}
-                    />
-                    <input name="reps" type="hidden" defaultValue="0" />
-                    <input name="set_count" type="hidden" defaultValue="1" />
-                    <input
-                      name="exercise_note"
-                      placeholder="메모 (예: 공원 3바퀴)"
-                      style={inputStyle}
-                    />
-                  </div>
-                )}
-
-                {set.type === "etc" && (
-                  <div>
-                    <input name="weight" type="hidden" defaultValue="0" />
-                    <input name="reps" type="hidden" defaultValue="0" />
-                    <input name="set_count" type="hidden" defaultValue="1" />
-                    <input
-                      name="exercise_note"
-                      placeholder="메모 (예: 풋살 2시간)"
-                      style={inputStyle}
-                    />
-                  </div>
-                )}
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr 1fr",
+                    gap: "8px",
+                  }}
+                >
+                  <input
+                    name="weight"
+                    type="number"
+                    defaultValue={s.weight}
+                    placeholder="중량(kg)"
+                    style={inputStyle}
+                  />
+                  <input
+                    name="set_count"
+                    type="number"
+                    defaultValue={s.set_count}
+                    placeholder="세트수"
+                    style={inputStyle}
+                  />
+                  <input
+                    name="reps"
+                    type="number"
+                    defaultValue={s.reps}
+                    placeholder="횟수"
+                    style={inputStyle}
+                  />
+                </div>
+                <input name="exercise_note" type="hidden" defaultValue="" />
               </div>
             ))}
-
             <button
               type="button"
-              onClick={addSet}
+              onClick={addWeight}
               style={{
                 width: "100%",
-                padding: "12px",
+                padding: "10px",
                 borderRadius: "8px",
                 background: "transparent",
                 color: "#39FF14",
                 border: "1px dashed #39FF14",
                 cursor: "pointer",
-                fontSize: "0.9rem",
+                fontSize: "0.85rem",
+                marginBottom: "24px",
               }}
             >
-              + 종목 추가
+              + 웨이트 종목 추가
+            </button>
+          </div>
+
+          {/* 🏃 유산소 */}
+          <div style={{ borderTop: "1px solid #333", paddingTop: "20px" }}>
+            <p
+              style={{
+                color: "#A0A0A0",
+                fontSize: "0.75rem",
+                fontWeight: 600,
+                letterSpacing: "0.1em",
+                textTransform: "uppercase",
+                marginBottom: "16px",
+              }}
+            >
+              🏃 유산소
+            </p>
+            {cardioSets.map((s, i) => (
+              <div key={i} style={sectionStyle}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: "10px",
+                  }}
+                >
+                  <span style={{ color: "#A0A0A0", fontSize: "0.8rem" }}>
+                    유산소 {i + 1}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => removeCardio(i)}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      color: "#FF3B30",
+                      cursor: "pointer",
+                      fontSize: "0.8rem",
+                    }}
+                  >
+                    삭제
+                  </button>
+                </div>
+                <input name="exercise_type" type="hidden" value="cardio" />
+                <input
+                  name="exercise_name"
+                  defaultValue={s.exercise_name}
+                  placeholder="종목명 (예: 러닝)"
+                  required
+                  style={{ ...inputStyle, marginBottom: "8px" }}
+                />
+                <input
+                  name="weight"
+                  type="number"
+                  defaultValue={s.weight}
+                  placeholder="시간 (분)"
+                  style={{ ...inputStyle, marginBottom: "8px" }}
+                />
+                <input name="set_count" type="hidden" defaultValue="1" />
+                <input name="reps" type="hidden" defaultValue="0" />
+                <input
+                  name="exercise_note"
+                  defaultValue={s.exercise_note}
+                  placeholder="메모 (예: 공원 3바퀴, 5km)"
+                  style={inputStyle}
+                />
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={addCardio}
+              style={{
+                width: "100%",
+                padding: "10px",
+                borderRadius: "8px",
+                background: "transparent",
+                color: "#A0A0A0",
+                border: "1px dashed #444",
+                cursor: "pointer",
+                fontSize: "0.85rem",
+                marginBottom: "24px",
+              }}
+            >
+              + 유산소 추가
+            </button>
+          </div>
+
+          {/* ⚽ 기타 */}
+          <div style={{ borderTop: "1px solid #333", paddingTop: "20px" }}>
+            <p
+              style={{
+                color: "#A0A0A0",
+                fontSize: "0.75rem",
+                fontWeight: 600,
+                letterSpacing: "0.1em",
+                textTransform: "uppercase",
+                marginBottom: "16px",
+              }}
+            >
+              ⚽ 기타
+            </p>
+            {etcSets.map((s, i) => (
+              <div key={i} style={sectionStyle}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: "10px",
+                  }}
+                >
+                  <span style={{ color: "#A0A0A0", fontSize: "0.8rem" }}>
+                    기타 {i + 1}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => removeEtc(i)}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      color: "#FF3B30",
+                      cursor: "pointer",
+                      fontSize: "0.8rem",
+                    }}
+                  >
+                    삭제
+                  </button>
+                </div>
+                <input name="exercise_type" type="hidden" value="etc" />
+                <input
+                  name="exercise_name"
+                  defaultValue={s.exercise_name}
+                  placeholder="종목명 (예: 풋살, 등산)"
+                  required
+                  style={{ ...inputStyle, marginBottom: "8px" }}
+                />
+                <input name="weight" type="hidden" defaultValue="0" />
+                <input name="set_count" type="hidden" defaultValue="1" />
+                <input name="reps" type="hidden" defaultValue="0" />
+                <input
+                  name="exercise_note"
+                  defaultValue={s.exercise_note}
+                  placeholder="메모 (예: 풋살 2시간)"
+                  style={inputStyle}
+                />
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={addEtc}
+              style={{
+                width: "100%",
+                padding: "10px",
+                borderRadius: "8px",
+                background: "transparent",
+                color: "#A0A0A0",
+                border: "1px dashed #444",
+                cursor: "pointer",
+                fontSize: "0.85rem",
+              }}
+            >
+              + 기타 추가
             </button>
           </div>
 
@@ -441,7 +521,7 @@ export default function EditWorkoutPage() {
               fontSize: "1rem",
               cursor: "pointer",
               border: "none",
-              marginTop: "8px",
+              marginTop: "16px",
             }}
           >
             💾 수정 완료

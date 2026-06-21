@@ -112,12 +112,11 @@ export default async function WorkoutDetailPage({ params }) {
                   {s.exercise_name}
                 </span>
                 <span style={{ color: "#A0A0A0", fontSize: "0.9rem" }}>
-                  {/* 웨이트만 중량/세트/횟수 표시 */}
-                  {s.weight > 0 && s.reps > 0
+                  {s.exercise_type === "weight" && s.reps > 0
                     ? `${s.weight}kg × ${s.set_count}세트 × ${s.reps}회`
-                    : s.weight > 0
-                      ? `${s.weight}분`
-                      : "기록됨"}
+                    : s.exercise_type === "cardio"
+                      ? `${s.weight}분${s.exercise_note ? ` · ${s.exercise_note}` : ""}`
+                      : s.exercise_note || "기록됨"}
                 </span>
               </div>
             ))}
